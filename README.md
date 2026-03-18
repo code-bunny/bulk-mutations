@@ -1,6 +1,6 @@
 # BulkRails
 
-A Rails 8 demo app exploring standardised bulk update patterns via GraphQL. Built around a `bulkCreateCustomFields` mutation that supports inline operations, file-based imports via URL, dry-run preview, idempotency, and row-level validation feedback.
+A Rails 8 demo app exploring standardised bulk mutation patterns via GraphQL. Built around two mutations — `bulkCreateCustomFields` and `bulkUpsertCustomFields` — that share a common base supporting inline operations, URL-based JSON imports, dry-run preview, idempotency, and row-level validation feedback.
 
 ---
 
@@ -15,7 +15,7 @@ bin/rails server
 | URL | What it is |
 |-----|------------|
 | `http://localhost:3000` | Dashboard — live view of bulk operations and custom fields |
-| `http://localhost:3000/graphiql` | GraphiQL IDE — try mutations interactively |
+| `http://localhost:3000/graphiql` | GraphiQL IDE — opens with 5 named example tabs |
 | `http://localhost:3000/fixtures/custom_fields` | Fixture endpoint — returns 5–25 random operations as JSON |
 
 ---
@@ -32,7 +32,7 @@ bundle exec rspec
 
 ```
 CustomField
-  title:  string   (required)
+  title:  string   (required, unique)
   body:   text     (required)
 
 CustomFieldValidationOption  (belongs_to CustomField)
@@ -132,10 +132,14 @@ enum BulkOperationStatus {
   CANCELLED
 }
 
-# ── Mutation ─────────────────────────────────────────────────────────────
+# ── Mutations ─────────────────────────────────────────────────────────────
 
 type Mutation {
+  # Creates new records — fails if a title already exists
   bulkCreateCustomFields(input: BulkCreateCustomFieldsInput!): BulkCreateCustomFieldsPayload!
+
+  # Creates or updates records matched by title
+  bulkUpsertCustomFields(input: BulkCreateCustomFieldsInput!): BulkCreateCustomFieldsPayload!
 }
 
 # ── Query ─────────────────────────────────────────────────────────────────
@@ -159,6 +163,34 @@ type BulkOperation {
   completedAt:    ISO8601DateTime
 }
 ```
+
+---
+
+## Mutations
+
+### `bulkCreateCustomFields`
+
+Creates new `CustomField` records. Each row fails independently — a row with a duplicate title will fail while others succeed. The final status reflects whether all, some, or none of the rows succeeded.
+
+### `bulkUpsertCustomFields`
+
+Finds an existing `CustomField` by `title` and updates it, or creates a new one if no match is found. Replaces the associated validation options on update.
+
+Both mutations accept the same input and return the same union type. Both support preview mode, `operationsUrl`, and idempotency.
+
+---
+
+## Preview mode
+
+Setting `preview: true` runs validation on every row without persisting anything. The response is a `BulkOperationPreviewResult` with per-row error details.
+
+Preview runs the full ActiveRecord model validation, which means it catches:
+- blank title or body
+- duplicate titles (for `bulkCreateCustomFields` — already-existing titles will be flagged)
+- `minLength` greater than `maxLength`
+- invalid regex patterns
+
+For `bulkUpsertCustomFields`, existing titles are not flagged as errors in preview — they represent rows that will be updated.
 
 ---
 
@@ -191,11 +223,7 @@ mutation {
       totalRows
       validRows
       invalidRows
-      errors {
-        rowIndex
-        field
-        message
-      }
+      errors { rowIndex field message }
     }
   }
 }
@@ -239,11 +267,7 @@ mutation {
       totalRows
       validRows
       invalidRows
-      errors {
-        rowIndex
-        field
-        message
-      }
+      errors { rowIndex field message }
     }
   }
 }
@@ -323,7 +347,38 @@ Response:
 
 ---
 
-### 4. Live create — URL-based
+### 4. Upsert — create or update by title
+
+Uses `bulkUpsertCustomFields`. Records matched by `title` are updated; unmatched titles are created. Validation options are replaced on update.
+
+```graphql
+mutation {
+  bulkUpsertCustomFields(input: {
+    preview: false
+    operations: [
+      {
+        customField: { title: "Department", body: "Updated body" }
+        validationOptions: { required: true, maxLength: 200 }
+      }
+      {
+        customField: { title: "Brand New Field", body: "Hello" }
+      }
+    ]
+  }) {
+    ... on BulkOperationResult {
+      id
+      status
+      totalRows
+      successfulRows
+      failedRows
+    }
+  }
+}
+```
+
+---
+
+### 5. Live create — URL-based
 
 Point `operationsUrl` at any accessible JSON endpoint. The server fetches, parses, and processes it.
 
@@ -381,7 +436,7 @@ Execution errors are returned (not HTTP errors) so they appear in the GraphQL `e
 
 ---
 
-### 5. Preview via URL
+### 6. Preview via URL
 
 `preview: true` works with `operationsUrl` too — validates without persisting.
 
@@ -395,11 +450,7 @@ mutation {
       totalRows
       validRows
       invalidRows
-      errors {
-        rowIndex
-        field
-        message
-      }
+      errors { rowIndex field message }
     }
   }
 }
@@ -407,7 +458,7 @@ mutation {
 
 ---
 
-### 6. Using both fragments together
+### 7. Using both fragments together
 
 When `preview` is a variable, one query handles both cases:
 
@@ -433,7 +484,7 @@ mutation BulkCreate($input: BulkCreateCustomFieldsInput!) {
 
 ---
 
-### 7. Idempotency
+### 8. Idempotency
 
 Passing the same `idempotencyKey` on a retry returns the original operation instead of creating a new one. Safe to retry on network failure.
 
@@ -451,7 +502,7 @@ mutation {
 
 ---
 
-### 8. Poll job status
+### 9. Poll job status
 
 Use the `id` from a live create result to query the full operation record:
 
@@ -472,3 +523,17 @@ query {
   }
 }
 ```
+
+---
+
+## GraphiQL
+
+`/graphiql` opens with five named tabs, one per example operation:
+
+| Tab | What it does |
+|-----|-------------|
+| `inlineMutation` | Preview dry-run with inline operations |
+| `urlMutation` | Live create via the fixture URL |
+| `upsertMutation` | Upsert (create or update) inline operations |
+| `wrongMutation` | Error case — both `operations` and `operationsUrl` provided |
+| `pollJob` | Poll a job by ID |
