@@ -4,6 +4,12 @@ module Mutations
 
     private
 
+    def build_record_for_preview(op)
+      cf = CustomField.find_or_initialize_by(title: op.custom_field.title)
+      cf.body = op.custom_field.body
+      cf
+    end
+
     def run_bulk_operation(operations, idempotency_key)
       bulk_op = track_bulk_operation(operations, idempotency_key)
       successful = 0

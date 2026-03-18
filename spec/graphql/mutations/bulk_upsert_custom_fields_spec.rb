@@ -130,6 +130,18 @@ RSpec.describe "bulkUpsertCustomFields mutation" do
       expect(data["invalidRows"]).to eq(1)
       expect(data["errors"].map { |e| e["field"] }).to include("title", "body")
     end
+
+    context "when a title already exists in the database" do
+      before { CustomField.create!(title: "Department", body: "Old body") }
+
+      it "does not flag the existing title as invalid (it will be updated)" do
+        result = execute("input" => { "preview" => true, "operations" => operations })
+        data = result.dig("data", "bulkUpsertCustomFields")
+
+        expect(data["validRows"]).to eq(2)
+        expect(data["invalidRows"]).to eq(0)
+      end
+    end
   end
 
   describe "idempotency key" do

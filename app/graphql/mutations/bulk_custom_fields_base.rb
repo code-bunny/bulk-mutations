@@ -102,15 +102,20 @@ module Mutations
       }
     end
 
+    # Subclasses can override to change how the record is built for preview validation.
+    # BulkUpsertCustomFields uses find_or_initialize_by so existing titles aren't flagged.
+    def build_record_for_preview(op)
+      CustomField.new(title: op.custom_field.title, body: op.custom_field.body)
+    end
+
     def validate_operation(op, idx)
       errors = []
-      cf = op.custom_field
 
-      if cf.title.blank?
-        errors << { row_index: idx, sheet: nil, field: "title", message: "Title can't be blank" }
-      end
-      if cf.body.blank?
-        errors << { row_index: idx, sheet: nil, field: "body", message: "Body can't be blank" }
+      cf = build_record_for_preview(op)
+      unless cf.valid?
+        cf.errors.each do |error|
+          errors << { row_index: idx, sheet: nil, field: error.attribute.to_s, message: error.full_message }
+        end
       end
 
       if op.validation_options

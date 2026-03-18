@@ -125,6 +125,27 @@ RSpec.describe "bulkCreateCustomFields mutation" do
       end
     end
 
+    context "when a title already exists in the database" do
+      before { CustomField.create!(title: "Department", body: "Old body") }
+
+      it "reports a uniqueness error for the duplicate title" do
+        result = execute("input" => { "preview" => true, "operations" => valid_operations })
+        data = result.dig("data", "bulkCreateCustomFields")
+
+        expect(data["invalidRows"]).to eq(1)
+        error = data["errors"].find { |e| e["field"] == "title" }
+        expect(error).to be_present
+        expect(error["rowIndex"]).to eq(0)
+      end
+
+      it "still reports the remaining rows as valid" do
+        result = execute("input" => { "preview" => true, "operations" => valid_operations })
+        data = result.dig("data", "bulkCreateCustomFields")
+
+        expect(data["validRows"]).to eq(2)
+      end
+    end
+
     context "with multiple rows, some invalid" do
       let(:operations) do
         [
