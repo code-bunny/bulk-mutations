@@ -1,0 +1,109 @@
+# ── 1. Preview inline operations (dry-run, nothing persisted) ────────────────
+mutation inlineMutation {
+  bulkCreateCustomFields(input: {
+    preview: true
+    operations: [
+      {
+        customField: { title: "Department", body: "Engineering" }
+        validationOptions: { required: true, maxLength: 100 }
+      }
+      {
+        customField: { title: "Cost Centre", body: "CC-404" }
+        validationOptions: { required: true, pattern: "^CC-\\d{3}$" }
+      }
+      {
+        customField: { title: "Travel Tier", body: "Premium" }
+        validationOptions: { allowedValues: ["Standard", "Premium", "Executive"] }
+      }
+    ]
+  }) {
+    ... on BulkOperationResult {
+      id
+      status
+      totalRows
+      successfulRows
+      failedRows
+    }
+    ... on BulkOperationPreviewResult {
+      totalRows
+      validRows
+      invalidRows
+      errors { rowIndex field message }
+    }
+  }
+}
+
+# ── 2. Live create via URL (fetches random 5-25 fields from fixture endpoint) ─
+mutation urlMutation {
+  bulkCreateCustomFields(input: {
+    preview: false
+    operationsUrl: "http://localhost:3000/fixtures/custom_fields"
+  }) {
+    ... on BulkOperationResult {
+      id
+      status
+      totalRows
+      successfulRows
+      failedRows
+    }
+    ... on BulkOperationPreviewResult {
+      totalRows
+      validRows
+      invalidRows
+      errors { rowIndex field message }
+    }
+  }
+}
+
+# ── 3. Error case — both operations and operationsUrl provided ────────────────
+mutation wrongMutation {
+  bulkCreateCustomFields(input: {
+    preview: false
+    operationsUrl: "http://localhost:3000/fixtures/custom_fields"
+    operations: [
+      {
+        customField: { title: "Department", body: "Engineering" }
+        validationOptions: { required: true, maxLength: 100 }
+      }
+      {
+        customField: { title: "Cost Centre", body: "CC-404" }
+        validationOptions: { required: true, pattern: "^CC-\\d{3}$" }
+      }
+      {
+        customField: { title: "Travel Tier", body: "Premium" }
+        validationOptions: { allowedValues: ["Standard", "Premium", "Executive"] }
+      }
+    ]
+  }) {
+    ... on BulkOperationResult {
+      id
+      status
+      totalRows
+      successfulRows
+      failedRows
+    }
+    ... on BulkOperationPreviewResult {
+      totalRows
+      validRows
+      invalidRows
+      errors { rowIndex field message }
+    }
+  }
+}
+
+# ── 4. Poll a job by ID (replace "1" with an id from a live create result) ────
+query pollJob {
+  bulkOperation(id: "1") {
+    id
+    status
+    totalRows
+    processedRows
+    successfulRows
+    failedRows
+    resultUrl
+    errorUrl
+    createdAt
+    startedAt
+    completedAt
+  }
+}
