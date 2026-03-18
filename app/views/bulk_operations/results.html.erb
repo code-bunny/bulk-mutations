@@ -1,0 +1,50 @@
+<% content_for :title, "Results — Bulk Operation ##{@bulk_operation.id}" %>
+
+<div class="container py-4" style="max-width: 860px; margin: 0 auto; font-family: system-ui, sans-serif;">
+  <nav style="margin-bottom: 1rem;">
+    <%= link_to "← Dashboard", root_path, style: "color: #6366f1; text-decoration: none; font-size: 0.875rem;" %>
+  </nav>
+
+  <div style="display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.5rem;">
+    <h1 style="margin: 0; font-size: 1.5rem;">Successful rows</h1>
+    <span style="background: #dcfce7; color: #166534; padding: 2px 10px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600;">
+      Bulk Operation #<%= @bulk_operation.id %> &middot; <%= @bulk_operation.status.humanize %>
+    </span>
+  </div>
+
+  <% if @rows.empty? %>
+    <p style="color: #6b7280;">No successful rows recorded for this operation.</p>
+  <% else %>
+    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+      <thead>
+        <tr style="background: #f9fafb; text-align: left;">
+          <th style="padding: 10px 14px; border-bottom: 1px solid #e5e7eb;">#</th>
+          <th style="padding: 10px 14px; border-bottom: 1px solid #e5e7eb;">Title</th>
+          <th style="padding: 10px 14px; border-bottom: 1px solid #e5e7eb;">Body</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @rows.each_with_index do |row, i| %>
+          <tr style="border-bottom: 1px solid #f3f4f6;">
+            <td style="padding: 10px 14px; color: #9ca3af;"><%= i + 1 %></td>
+            <td style="padding: 10px 14px; font-weight: 500;"><%= row["title"] %></td>
+            <td style="padding: 10px 14px; color: #374151;"><%= row["body"] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <p style="margin-top: 1rem; color: #6b7280; font-size: 0.85rem;">
+      <%= @rows.size %> record<%= @rows.size == 1 ? "" : "s" %> created or updated.
+    </p>
+  <% end %>
+
+  <% if @bulk_operation.error_url.present? %>
+    <div style="margin-top: 2rem; padding: 12px 16px; background: #fef2f2; border-radius: 6px; border: 1px solid #fecaca;">
+      <span style="color: #991b1b; font-size: 0.875rem;">
+        <%= @bulk_operation.failed_rows %> row<%= @bulk_operation.failed_rows == 1 ? "" : "s" %> failed.
+      </span>
+      <%= link_to "View errors →", @bulk_operation.error_url, style: "color: #dc2626; font-size: 0.875rem; margin-left: 8px;" %>
+    </div>
+  <% end %>
+</div>

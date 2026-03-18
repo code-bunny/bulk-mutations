@@ -17,6 +17,12 @@ Rails.application.routes.draw do
   root "dashboard#index"
   delete "/bulk_operations/reset", to: "dashboard#reset",        as: :reset_bulk_operations
   delete "/custom_fields/reset",   to: "dashboard#reset_fields", as: :reset_custom_fields
+  resources :bulk_operations, only: [] do
+    member do
+      get :results
+      get :errors
+    end
+  end
 
   get "/fixtures/custom_fields", to: "fixtures#custom_fields"
 end

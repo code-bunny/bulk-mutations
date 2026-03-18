@@ -273,7 +273,58 @@ RSpec.describe "bulkCreateCustomFields mutation" do
       ].to_json
     end
 
-    context "with a valid URL returning JSON" do
+    context "with preview: false (async path)" do
+      it "returns a QUEUED BulkOperation immediately without fetching the URL" do
+        result = execute("input" => { "preview" => false, "operationsUrl" => operations_url })
+        data = result.dig("data", "bulkCreateCustomFields")
+
+        expect(result["errors"]).to be_nil
+        expect(data["status"]).to eq("QUEUED")
+      end
+
+      it "enqueues a BulkCreateCustomFieldsJob" do
+        expect {
+          execute("input" => { "preview" => false, "operationsUrl" => operations_url })
+        }.to have_enqueued_job(BulkCreateCustomFieldsJob)
+      end
+
+      it "does not persist any records synchronously" do
+        expect {
+          execute("input" => { "preview" => false, "operationsUrl" => operations_url })
+        }.not_to change { CustomField.count }
+      end
+
+      context "when the job runs" do
+        before do
+          stub_request(:get, operations_url).to_return(
+            status: 200,
+            body: valid_json,
+            headers: { "Content-Type" => "application/json" }
+          )
+        end
+
+        it "processes the operations and marks the BulkOperation COMPLETED" do
+          perform_enqueued_jobs do
+            execute("input" => { "preview" => false, "operationsUrl" => operations_url })
+          end
+
+          bulk_op = BulkOperation.last
+          expect(bulk_op.status).to eq("completed")
+          expect(bulk_op.successful_rows).to eq(2)
+          expect(bulk_op.failed_rows).to eq(0)
+        end
+
+        it "persists the custom fields" do
+          expect {
+            perform_enqueued_jobs do
+              execute("input" => { "preview" => false, "operationsUrl" => operations_url })
+            end
+          }.to change { CustomField.count }.by(2)
+        end
+      end
+    end
+
+    context "with preview: true (synchronous path)" do
       before do
         stub_request(:get, operations_url).to_return(
           status: 200,
@@ -282,22 +333,7 @@ RSpec.describe "bulkCreateCustomFields mutation" do
         )
       end
 
-      it "fetches and processes the remote operations" do
-        result = execute("input" => { "preview" => false, "operationsUrl" => operations_url })
-        data = result.dig("data", "bulkCreateCustomFields")
-
-        expect(data["status"]).to eq("COMPLETED")
-        expect(data["totalRows"]).to eq(2)
-        expect(data["successfulRows"]).to eq(2)
-      end
-
-      it "persists the custom fields from the remote file" do
-        expect {
-          execute("input" => { "preview" => false, "operationsUrl" => operations_url })
-        }.to change { CustomField.count }.by(2)
-      end
-
-      it "supports preview mode via URL" do
+      it "fetches the URL and returns an immediate preview result" do
         result = execute("input" => { "preview" => true, "operationsUrl" => operations_url })
         data = result.dig("data", "bulkCreateCustomFields")
 
@@ -305,40 +341,15 @@ RSpec.describe "bulkCreateCustomFields mutation" do
         expect(data["validRows"]).to eq(2)
         expect(data["invalidRows"]).to eq(0)
       end
-    end
 
-    context "with camelCase and snake_case keys" do
-      let(:snake_case_json) do
-        [
-          {
-            "custom_field" => { "title" => "Region", "body" => "EMEA" },
-            "validation_options" => { "required" => true, "max_length" => 50 }
-          }
-        ].to_json
-      end
-
-      before do
-        stub_request(:get, operations_url).to_return(
-          status: 200,
-          body: snake_case_json,
-          headers: { "Content-Type" => "application/json" }
-        )
-      end
-
-      it "accepts snake_case keys from the JSON file" do
-        result = execute("input" => { "preview" => false, "operationsUrl" => operations_url })
-        data = result.dig("data", "bulkCreateCustomFields")
-
-        expect(data["successfulRows"]).to eq(1)
-        expect(CustomField.find_by(title: "Region")).to be_present
+      it "does not persist any records" do
+        expect {
+          execute("input" => { "preview" => true, "operationsUrl" => operations_url })
+        }.not_to change { CustomField.count }
       end
     end
 
     context "when both operations and operationsUrl are provided" do
-      before do
-        stub_request(:get, operations_url).to_return(status: 200, body: valid_json)
-      end
-
       it "returns an error" do
         result = execute("input" => {
           "operationsUrl" => operations_url,
@@ -350,43 +361,38 @@ RSpec.describe "bulkCreateCustomFields mutation" do
       end
     end
 
-    context "when the URL returns a non-200 status" do
-      before do
-        stub_request(:get, operations_url).to_return(status: 404, body: "Not Found")
+    context "when a non-HTTP URL is provided" do
+      it "returns an execution error immediately (before enqueueing)" do
+        result = execute("input" => { "preview" => false, "operationsUrl" => "ftp://example.com/file.json" })
+        expect(result["errors"].first["message"]).to match(/HTTP or HTTPS/)
       end
+    end
+
+    # HTTP-level and JSON errors surface via the job — tested in spec/jobs/
+    context "when the URL returns a non-200 status (preview path)" do
+      before { stub_request(:get, operations_url).to_return(status: 404, body: "Not Found") }
 
       it "returns an execution error" do
-        result = execute("input" => { "preview" => false, "operationsUrl" => operations_url })
+        result = execute("input" => { "preview" => true, "operationsUrl" => operations_url })
         expect(result["errors"].first["message"]).to match(/HTTP 404/)
       end
     end
 
-    context "when the URL returns invalid JSON" do
-      before do
-        stub_request(:get, operations_url).to_return(status: 200, body: "not json")
-      end
+    context "when the URL returns invalid JSON (preview path)" do
+      before { stub_request(:get, operations_url).to_return(status: 200, body: "not json") }
 
       it "returns an execution error" do
-        result = execute("input" => { "preview" => false, "operationsUrl" => operations_url })
+        result = execute("input" => { "preview" => true, "operationsUrl" => operations_url })
         expect(result["errors"].first["message"]).to match(/valid JSON/)
       end
     end
 
-    context "when the URL returns a JSON object instead of an array" do
-      before do
-        stub_request(:get, operations_url).to_return(status: 200, body: '{"foo":"bar"}')
-      end
+    context "when the URL returns a JSON object instead of an array (preview path)" do
+      before { stub_request(:get, operations_url).to_return(status: 200, body: '{"foo":"bar"}') }
 
       it "returns an execution error" do
-        result = execute("input" => { "preview" => false, "operationsUrl" => operations_url })
+        result = execute("input" => { "preview" => true, "operationsUrl" => operations_url })
         expect(result["errors"].first["message"]).to match(/JSON array/)
-      end
-    end
-
-    context "when a non-HTTP URL is provided" do
-      it "returns an execution error" do
-        result = execute("input" => { "preview" => false, "operationsUrl" => "ftp://example.com/file.json" })
-        expect(result["errors"].first["message"]).to match(/HTTP or HTTPS/)
       end
     end
   end

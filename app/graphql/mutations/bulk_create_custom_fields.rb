@@ -4,6 +4,10 @@ module Mutations
 
     private
 
+    def url_job_class
+      BulkCreateCustomFieldsJob
+    end
+
     def run_bulk_operation(operations, idempotency_key)
       bulk_op = track_bulk_operation(operations, idempotency_key)
       successful = 0

@@ -4,6 +4,10 @@ module Mutations
 
     private
 
+    def url_job_class
+      BulkUpsertCustomFieldsJob
+    end
+
     def build_record_for_preview(op)
       cf = CustomField.find_or_initialize_by(title: op.custom_field.title)
       cf.body = op.custom_field.body

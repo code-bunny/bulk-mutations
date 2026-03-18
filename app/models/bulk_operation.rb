@@ -1,4 +1,6 @@
 class BulkOperation < ApplicationRecord
+  serialize :results_data, coder: JSON
+
   enum :status, {
     created: 0,
     validating: 1,
