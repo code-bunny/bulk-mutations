@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  if Rails.env.development?
+  unless Rails.env.production?
     get "/graphiql", to: "graphiql#index"
   end
   post "/graphql", to: "graphql#execute"
