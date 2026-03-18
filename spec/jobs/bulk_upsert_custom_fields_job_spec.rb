@@ -11,7 +11,7 @@ RSpec.describe BulkUpsertCustomFieldsJob do
       },
       {
         "customField" => { "title" => "Travel Tier", "body" => "Premium" },
-        "validationOptions" => { "allowedValues" => ["Standard", "Premium"] }
+        "validationOptions" => { "allowedValues" => [ "Standard", "Premium" ] }
       }
     ].to_json
   end

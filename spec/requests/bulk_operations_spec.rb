@@ -18,7 +18,7 @@ RSpec.describe "BulkOperation reports", type: :request do
           { "title" => "Travel Tier", "body" => "Premium" }
         ],
         "failures" => [
-          { "title" => "", "body" => "foo", "errors" => ["Title can't be blank"] }
+          { "title" => "", "body" => "foo", "errors" => [ "Title can't be blank" ] }
         ]
       }
     )

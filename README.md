@@ -17,6 +17,8 @@ bin/rails server
 | `http://localhost:3000` | Dashboard — live view of bulk operations and custom fields |
 | `http://localhost:3000/graphiql` | GraphiQL IDE — opens with 5 named example tabs |
 | `http://localhost:3000/fixtures/custom_fields` | Fixture endpoint — returns 5–25 random operations as JSON |
+| `http://localhost:3000/bulk_operations/:id/results` | Report — rows that succeeded in a completed operation |
+| `http://localhost:3000/bulk_operations/:id/errors` | Report — rows that failed with their validation errors |
 
 ---
 
@@ -49,8 +51,9 @@ BulkOperation
   successful_rows:  integer
   failed_rows:      integer
   idempotency_key:  string
-  result_url:       string
-  error_url:        string
+  result_url:       string    — set whenever any rows succeeded (links to /results report)
+  error_url:        string    — set whenever any rows failed   (links to /errors  report)
+  results_data:     text      — JSON; { successes: [{title,body}], failures: [{title,body,errors}] }
   started_at:       datetime
   completed_at:     datetime
 ```
@@ -177,6 +180,28 @@ Creates new `CustomField` records. Each row fails independently — a row with a
 Finds an existing `CustomField` by `title` and updates it, or creates a new one if no match is found. Replaces the associated validation options on update.
 
 Both mutations accept the same input and return the same union type. Both support preview mode, `operationsUrl`, and idempotency.
+
+---
+
+## Execution model
+
+How operations are processed depends on how they are supplied:
+
+| Input | `preview` | Behaviour |
+|-------|-----------|-----------|
+| `operations` (inline) | `false` | Processed synchronously. Returns a completed `BulkOperationResult` with `result_url` / `error_url`. |
+| `operations` (inline) | `true` | Validated synchronously. Returns a `BulkOperationPreviewResult`. Nothing is persisted. |
+| `operationsUrl` | `false` | URL format is validated immediately. A `QUEUED` `BulkOperationResult` is returned and an ActiveJob is enqueued. The job fetches the URL, processes rows, and updates the record. |
+| `operationsUrl` | `true` | URL is fetched synchronously. Returns an immediate `BulkOperationPreviewResult`. Nothing is persisted. |
+
+### Result reports
+
+After any operation completes (inline or async), the `BulkOperation` record carries:
+
+- **`resultUrl`** — always set when at least one row succeeded, even if the overall status is `COMPLETED`. Points to `/bulk_operations/:id/results`.
+- **`errorUrl`** — set when at least one row failed. Points to `/bulk_operations/:id/errors`.
+
+The dashboard links to these pages directly from the operations table.
 
 ---
 
@@ -324,6 +349,8 @@ mutation {
       totalRows
       successfulRows
       failedRows
+      resultUrl
+      errorUrl
     }
   }
 }
@@ -339,7 +366,9 @@ Response:
       "status": "COMPLETED",
       "totalRows": 3,
       "successfulRows": 3,
-      "failedRows": 0
+      "failedRows": 0,
+      "resultUrl": "/bulk_operations/1/results",
+      "errorUrl": null
     }
   }
 }
@@ -378,9 +407,9 @@ mutation {
 
 ---
 
-### 5. Live create — URL-based
+### 5. Live create — URL-based (async)
 
-Point `operationsUrl` at any accessible JSON endpoint. The server fetches, parses, and processes it.
+Point `operationsUrl` at any accessible JSON endpoint. The mutation returns immediately with `QUEUED` status while an ActiveJob fetches the URL and processes rows in the background.
 
 ```graphql
 mutation {
@@ -391,13 +420,29 @@ mutation {
     ... on BulkOperationResult {
       id
       status
-      totalRows
-      successfulRows
-      failedRows
+      resultUrl
+      errorUrl
     }
   }
 }
 ```
+
+Immediate response (job not yet run):
+
+```json
+{
+  "data": {
+    "bulkCreateCustomFields": {
+      "id": "42",
+      "status": "QUEUED",
+      "resultUrl": null,
+      "errorUrl": null
+    }
+  }
+}
+```
+
+Once the job completes, poll with `bulkOperation(id: "42")` — `status` will be `COMPLETED` (or `PARTIALLY_COMPLETED` / `FAILED`) and `resultUrl` / `errorUrl` will be populated.
 
 The fixture endpoint (`/fixtures/custom_fields`) returns 5–25 randomly generated operations on every request — useful for testing. Any hosted JSON file works in its place.
 
@@ -424,15 +469,24 @@ The file must be a top-level array. Both camelCase and snake_case keys are accep
 
 #### URL errors
 
-Execution errors are returned (not HTTP errors) so they appear in the GraphQL `errors` array:
+For non-preview URL operations, errors fall into two categories:
+
+**Mutation-level** (synchronous, returned in the GraphQL `errors` array):
 
 | Situation | Error message |
 |-----------|--------------|
 | Non-HTTP URL (e.g. `ftp://`) | `operationsUrl must be an HTTP or HTTPS URL` |
-| HTTP error response | `Failed to fetch operationsUrl (HTTP 404)` |
-| Response is not valid JSON | `operationsUrl did not return valid JSON: ...` |
-| Response is a JSON object, not array | `operationsUrl must return a JSON array` |
 | Both `operations` and `operationsUrl` given | `Provide either operations or operationsUrl, not both` |
+
+**Job-level** (async, reflected in the `BulkOperation` record as `FAILED` status):
+
+| Situation | Effect |
+|-----------|--------|
+| HTTP error response | `status` → `FAILED` |
+| Response is not valid JSON | `status` → `FAILED` |
+| Response is a JSON object, not array | `status` → `FAILED` |
+
+For `preview: true` with a URL, all errors are synchronous and returned in the GraphQL `errors` array.
 
 ---
 
