@@ -49,7 +49,7 @@ RSpec.describe "bulkCreateCustomFields mutation" do
       },
       {
         "customField" => { "title" => "Travel Tier", "body" => "Premium" },
-        "validationOptions" => { "allowedValues" => ["Standard", "Premium", "Executive"] }
+        "validationOptions" => { "allowedValues" => [ "Standard", "Premium", "Executive" ] }
       }
     ]
   end
@@ -75,7 +75,7 @@ RSpec.describe "bulkCreateCustomFields mutation" do
 
     context "with a blank title" do
       let(:operations) do
-        [{ "customField" => { "title" => "", "body" => "Some body" } }]
+        [ { "customField" => { "title" => "", "body" => "Some body" } } ]
       end
 
       it "reports a row-level error for the title field" do
@@ -91,10 +91,10 @@ RSpec.describe "bulkCreateCustomFields mutation" do
 
     context "with minLength greater than maxLength" do
       let(:operations) do
-        [{
+        [ {
           "customField" => { "title" => "Field", "body" => "body" },
           "validationOptions" => { "minLength" => 50, "maxLength" => 10 }
-        }]
+        } ]
       end
 
       it "reports a validation error for min_length" do
@@ -109,10 +109,10 @@ RSpec.describe "bulkCreateCustomFields mutation" do
 
     context "with an invalid regex pattern" do
       let(:operations) do
-        [{
+        [ {
           "customField" => { "title" => "Field", "body" => "body" },
           "validationOptions" => { "pattern" => "[invalid regex" }
-        }]
+        } ]
       end
 
       it "reports a pattern validation error" do
@@ -176,7 +176,7 @@ RSpec.describe "bulkCreateCustomFields mutation" do
         execute("input" => { "preview" => false, "operations" => valid_operations })
         field = CustomField.find_by(title: "Travel Tier")
 
-        expect(field.custom_field_validation_option.allowed_values).to eq(["Standard", "Premium", "Executive"])
+        expect(field.custom_field_validation_option.allowed_values).to eq([ "Standard", "Premium", "Executive" ])
       end
     end
 
@@ -321,7 +321,7 @@ RSpec.describe "bulkCreateCustomFields mutation" do
       it "returns an error" do
         result = execute("input" => {
           "operationsUrl" => operations_url,
-          "operations" => [{ "customField" => { "title" => "X", "body" => "Y" } }]
+          "operations" => [ { "customField" => { "title" => "X", "body" => "Y" } } ]
         })
 
         expect(result["errors"]).to be_present

@@ -14,7 +14,7 @@ class FixturesController < ApplicationController
     -> { { title: "Policy Holder",    body: Faker::Name.name,                  validation: { required: true, maxLength: 120 } } },
     -> { { title: "Reference Number", body: Faker::Alphanumeric.alphanumeric(number: 10).upcase, validation: { pattern: "^[A-Z0-9]{10}$" } } },
     -> { { title: "Approval Status",  body: %w[Pending Approved Rejected].sample, validation: { allowedValues: %w[Pending Approved Rejected] } } },
-    -> { { title: "Country",          body: Faker::Address.country,            validation: { required: true } } },
+    -> { { title: "Country",          body: Faker::Address.country,            validation: { required: true } } }
   ].freeze
 
   def custom_fields

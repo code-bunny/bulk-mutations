@@ -5,6 +5,6 @@ module Inputs
     argument :min_length, Integer, required: false
     argument :max_length, Integer, required: false
     argument :pattern, String, required: false
-    argument :allowed_values, [String], required: false
+    argument :allowed_values, [ String ], required: false
   end
 end
