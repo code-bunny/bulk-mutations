@@ -22,12 +22,13 @@
 
     const fetcher = GraphiQL.createFetcher({ url: GRAPHQL_URL });
 
-    const defaultTabs = <%= raw @tabs.map { |t| { title: t[:title], query: t[:query].strip } }.to_json %>;
+    const defaultTabs = <%= raw @tabs.map { |t| { query: t[:query].strip } }.to_json %>;
 
     ReactDOM.createRoot(document.getElementById("graphiql")).render(
       React.createElement(GraphiQL, {
         fetcher,
         defaultTabs,
+        storage: null,
         defaultEditorToolsVisibility: false,
       })
     );

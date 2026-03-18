@@ -22,14 +22,14 @@ RSpec.describe "GET /graphiql", type: :request do
     expect(response.body).to include("defaultTabs")
   end
 
-  it "includes a tab for each named operation" do
+  it "includes a query for each named operation" do
     get "/graphiql"
     body = response.body
-    expect(body).to include("Preview Inline")
-    expect(body).to include("Create via URL")
-    expect(body).to include("Upsert (create or update)")
-    expect(body).to include("Error Case")
-    expect(body).to include("Poll Job")
+    expect(body).to include("inlineMutation")
+    expect(body).to include("urlMutation")
+    expect(body).to include("upsertMutation")
+    expect(body).to include("wrongMutation")
+    expect(body).to include("pollJob")
   end
 
   it "points the fetcher at /graphql" do

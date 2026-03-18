@@ -41,7 +41,7 @@ RSpec.describe "bulkUpsertCustomFields mutation" do
       },
       {
         "customField" => { "title" => "Travel Tier", "body" => "Premium" },
-        "validationOptions" => { "allowedValues" => ["Standard", "Premium", "Executive"] }
+        "validationOptions" => { "allowedValues" => [ "Standard", "Premium", "Executive" ] }
       }
     ]
   end
@@ -98,7 +98,7 @@ RSpec.describe "bulkUpsertCustomFields mutation" do
     end
 
     it "removes old validation options when none are provided" do
-      ops = [{ "customField" => { "title" => "Department", "body" => "Updated" } }]
+      ops = [ { "customField" => { "title" => "Department", "body" => "Updated" } } ]
       execute("input" => { "preview" => false, "operations" => ops })
 
       field = CustomField.find_by(title: "Department")
@@ -123,7 +123,7 @@ RSpec.describe "bulkUpsertCustomFields mutation" do
     end
 
     it "reports validation errors" do
-      bad_ops = [{ "customField" => { "title" => "", "body" => "" } }]
+      bad_ops = [ { "customField" => { "title" => "", "body" => "" } } ]
       result = execute("input" => { "preview" => true, "operations" => bad_ops })
       data = result.dig("data", "bulkUpsertCustomFields")
 
