@@ -4,7 +4,8 @@
       "Bash(grep -r \"graphql\" /Users/davidroy/Sites/CodeBunnies/bulkrails/Gemfile*)",
       "Bash(bundle install:*)",
       "Bash(bundle list:*)",
-      "Bash(bundle exec:*)"
+      "Bash(bundle exec:*)",
+      "Bash(cat /Users/davidroy/Sites/CodeBunnies/bulkrails/.github/workflows/*.yml)"
     ]
   }
 }
