@@ -10,58 +10,65 @@
     color: #1a1a1a;
   }
 
+  /* ── Header ─────────────────────────────────────────────────── */
   header {
     background: #1a1a1a;
     color: #fff;
-    padding: 16px 32px;
+    padding: 0 32px;
     display: flex;
     align-items: center;
     gap: 24px;
+    height: 52px;
   }
-
-  header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
-
-  header a {
-    color: #aaa;
-    text-decoration: none;
-    font-size: 13px;
-  }
-
+  header h1 { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
+  header a { color: #aaa; text-decoration: none; font-size: 13px; }
   header a:hover { color: #fff; }
 
-  .page { padding: 32px; max-width: 1200px; margin: 0 auto; }
+  /* ── Page shell ──────────────────────────────────────────────── */
+  .page { padding: 28px 32px; max-width: 1200px; margin: 0 auto; }
 
-  .section { margin-bottom: 40px; }
-
-  .section-header {
+  /* ── Tabs ────────────────────────────────────────────────────── */
+  .tabs {
     display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-bottom: 16px;
+    align-items: center;
+    gap: 2px;
+    border-bottom: 2px solid #e5e5e5;
+    margin-bottom: 24px;
   }
-
-  .section-header h2 { font-size: 16px; font-weight: 600; }
-
-  .count {
-    font-size: 12px;
+  .tab {
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #666;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .tab:hover { color: #1a1a1a; }
+  .tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
+  .tab .count {
     background: #e5e5e5;
     color: #555;
-    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 7px;
     border-radius: 10px;
   }
+  .tab.active .count { background: #1a1a1a; color: #fff; }
 
+  .tab-actions { margin-left: auto; }
+
+  /* ── Card / Table ────────────────────────────────────────────── */
   .card {
     background: #fff;
     border: 1px solid #e5e5e5;
     border-radius: 8px;
     overflow: hidden;
   }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
+  table { width: 100%; border-collapse: collapse; }
   th {
     text-align: left;
     font-size: 11px;
@@ -73,23 +80,25 @@
     background: #fafafa;
     border-bottom: 1px solid #e5e5e5;
   }
-
   td {
     padding: 12px 16px;
     border-bottom: 1px solid #f0f0f0;
     vertical-align: top;
   }
-
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #fafafa; }
 
   .empty {
     text-align: center;
-    padding: 40px 16px;
+    padding: 48px 16px;
     color: #aaa;
     font-size: 13px;
+    line-height: 1.8;
   }
+  .empty a { color: #2563eb; text-decoration: none; }
+  .empty a:hover { text-decoration: underline; }
 
+  /* ── Badges ──────────────────────────────────────────────────── */
   .badge {
     display: inline-block;
     padding: 2px 8px;
@@ -99,20 +108,32 @@
     text-transform: uppercase;
     letter-spacing: 0.4px;
   }
-
-  .badge-completed  { background: #dcfce7; color: #166534; }
-  .badge-failed     { background: #fee2e2; color: #991b1b; }
-  .badge-running    { background: #dbeafe; color: #1e40af; }
-  .badge-created    { background: #f3f4f6; color: #374151; }
-  .badge-queued     { background: #fef9c3; color: #854d0e; }
-  .badge-validating { background: #ede9fe; color: #5b21b6; }
-  .badge-cancelled  { background: #f3f4f6; color: #6b7280; }
+  .badge-completed           { background: #dcfce7; color: #166534; }
+  .badge-failed              { background: #fee2e2; color: #991b1b; }
+  .badge-running             { background: #dbeafe; color: #1e40af; }
+  .badge-created             { background: #f3f4f6; color: #374151; }
+  .badge-queued              { background: #fef9c3; color: #854d0e; }
+  .badge-validating          { background: #ede9fe; color: #5b21b6; }
+  .badge-cancelled           { background: #f3f4f6; color: #6b7280; }
   .badge-partially_completed { background: #fef3c7; color: #92400e; }
 
+  /* ── Misc helpers ────────────────────────────────────────────── */
   .mono { font-family: "SF Mono", Menlo, monospace; font-size: 12px; color: #555; }
+  .stat { color: #888; font-size: 12px; }
+  .stat strong { color: #1a1a1a; }
+
+  .progress-bar-wrap {
+    background: #e5e5e5;
+    border-radius: 4px;
+    height: 5px;
+    width: 120px;
+    overflow: hidden;
+    margin-top: 5px;
+  }
+  .progress-bar { height: 100%; background: #22c55e; border-radius: 4px; }
+  .progress-bar.has-failures { background: #f97316; }
 
   .tag-list { display: flex; flex-wrap: wrap; gap: 4px; }
-
   .tag {
     background: #f0f0f0;
     color: #444;
@@ -120,7 +141,6 @@
     border-radius: 4px;
     font-size: 12px;
   }
-
   .validation-pill {
     display: inline-block;
     background: #f0f4ff;
@@ -131,40 +151,59 @@
     margin: 2px 2px 2px 0;
   }
 
-  .progress-bar-wrap {
-    background: #e5e5e5;
-    border-radius: 4px;
-    height: 6px;
-    width: 120px;
-    overflow: hidden;
-    margin-top: 4px;
-  }
-
-  .progress-bar {
-    height: 100%;
-    background: #22c55e;
-    border-radius: 4px;
-  }
-
-  .progress-bar.has-failures { background: #f97316; }
-
-  .stat { color: #888; font-size: 12px; }
-  .stat strong { color: #1a1a1a; }
-
-  .graphiql-link {
+  /* ── Buttons ─────────────────────────────────────────────────── */
+  .btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: #2563eb;
-    color: #fff;
-    text-decoration: none;
-    padding: 7px 14px;
+    gap: 5px;
+    padding: 6px 12px;
     border-radius: 6px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
   }
+  .btn-danger {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  .btn-danger:hover { background: #fecaca; }
 
-  .graphiql-link:hover { background: #1d4ed8; }
+  /* ── Pagination ──────────────────────────────────────────────── */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-top: 1px solid #f0f0f0;
+    background: #fafafa;
+  }
+  .pagination-info { font-size: 12px; color: #888; }
+  .pagination-links { display: flex; gap: 4px; }
+  .pagination-links a,
+  .pagination-links span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    color: #444;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+  }
+  .pagination-links a:hover { background: #f5f5f5; }
+  .pagination-links .current {
+    background: #1a1a1a;
+    color: #fff;
+    border-color: #1a1a1a;
+  }
+  .pagination-links .disabled { color: #ccc; border-color: #f0f0f0; cursor: default; }
 </style>
 
 <header>
@@ -174,13 +213,38 @@
 
 <div class="page">
 
-  <%# ── Bulk Operations ─────────────────────────────────────────────── %>
-  <div class="section">
-    <div class="section-header">
-      <h2>Bulk Operations</h2>
-      <span class="count"><%= @bulk_operations.size %></span>
-    </div>
+  <%# ── Tabs ─────────────────────────────────────────────────── %>
+  <div class="tabs">
+    <%= link_to root_path(tab: "operations"),
+          class: "tab #{@tab == 'operations' ? 'active' : ''}" do %>
+      Bulk Operations
+      <span class="count"><%= @pagy_operations.count %></span>
+    <% end %>
 
+    <%= link_to root_path(tab: "fields"),
+          class: "tab #{@tab == 'fields' ? 'active' : ''}" do %>
+      Custom Fields
+      <span class="count"><%= @pagy_fields.count %></span>
+    <% end %>
+
+    <div class="tab-actions">
+      <% if @tab == "operations" && @pagy_operations.count > 0 %>
+        <%= button_to "Reset operations", reset_bulk_operations_path,
+              method: :delete,
+              class: "btn btn-danger",
+              data: { turbo_confirm: "Delete all bulk operations? This cannot be undone." } %>
+      <% end %>
+      <% if @tab == "fields" && @pagy_fields.count > 0 %>
+        <%= button_to "Reset custom fields", reset_custom_fields_path,
+              method: :delete,
+              class: "btn btn-danger",
+              data: { turbo_confirm: "Delete all custom fields and their validation options? This cannot be undone." } %>
+      <% end %>
+    </div>
+  </div>
+
+  <%# ── Bulk Operations tab ──────────────────────────────────── %>
+  <% if @tab == "operations" %>
     <div class="card">
       <% if @bulk_operations.any? %>
         <table>
@@ -196,10 +260,10 @@
           </thead>
           <tbody>
             <% @bulk_operations.each do |op| %>
-              <% total = op.total_rows.to_i %>
+              <% total   = op.total_rows.to_i %>
               <% success = op.successful_rows.to_i %>
-              <% failed = op.failed_rows.to_i %>
-              <% pct = total > 0 ? (success * 100.0 / total).round : 0 %>
+              <% failed  = op.failed_rows.to_i %>
+              <% pct     = total > 0 ? (success * 100.0 / total).round : 0 %>
               <tr>
                 <td class="mono">#<%= op.id %></td>
                 <td>
@@ -210,7 +274,7 @@
                 <td>
                   <% if total > 0 %>
                     <div class="stat">
-                      <strong><%= success %></strong> / <%= total %> rows
+                      <strong><%= success %></strong> / <%= total %>
                       <% if failed > 0 %>
                         &nbsp;·&nbsp;<span style="color:#ef4444"><%= failed %> failed</span>
                       <% end %>
@@ -230,19 +294,21 @@
             <% end %>
           </tbody>
         </table>
+
+        <%= render "pagination",
+              pagy: @pagy_operations,
+              tab: "operations" %>
       <% else %>
-        <div class="empty">No bulk operations yet. Try running a mutation in <a href="/graphiql">GraphiQL</a>.</div>
+        <div class="empty">
+          No bulk operations yet.<br>
+          Run a mutation in <a href="/graphiql">GraphiQL</a> to get started.
+        </div>
       <% end %>
     </div>
-  </div>
+  <% end %>
 
-  <%# ── Custom Fields ───────────────────────────────────────────────── %>
-  <div class="section">
-    <div class="section-header">
-      <h2>Custom Fields</h2>
-      <span class="count"><%= @custom_fields.size %></span>
-    </div>
-
+  <%# ── Custom Fields tab ────────────────────────────────────── %>
+  <% if @tab == "fields" %>
     <div class="card">
       <% if @custom_fields.any? %>
         <table>
@@ -292,10 +358,17 @@
             <% end %>
           </tbody>
         </table>
+
+        <%= render "pagination",
+              pagy: @pagy_fields,
+              tab: "fields" %>
       <% else %>
-        <div class="empty">No custom fields yet. Run a live create mutation in <a href="/graphiql">GraphiQL</a>.</div>
+        <div class="empty">
+          No custom fields yet.<br>
+          Run a live create mutation in <a href="/graphiql">GraphiQL</a>.
+        </div>
       <% end %>
     </div>
-  </div>
+  <% end %>
 
 </div>

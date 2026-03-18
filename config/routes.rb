@@ -15,6 +15,8 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   root "dashboard#index"
+  delete "/bulk_operations/reset", to: "dashboard#reset",        as: :reset_bulk_operations
+  delete "/custom_fields/reset",   to: "dashboard#reset_fields", as: :reset_custom_fields
 
   get "/fixtures/custom_fields", to: "fixtures#custom_fields"
 end

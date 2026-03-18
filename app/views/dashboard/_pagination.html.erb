@@ -1,0 +1,35 @@
+<% return unless pagy.pages > 1 %>
+
+<div class="pagination">
+  <span class="pagination-info">
+    <%= pagy.from %>–<%= pagy.to %> of <%= pagy.count %>
+  </span>
+
+  <div class="pagination-links">
+    <% if pagy.previous %>
+      <%= link_to "←", root_path(tab: tab, page: 1) %>
+      <%= link_to "‹", root_path(tab: tab, page: pagy.previous) %>
+    <% else %>
+      <span class="disabled">←</span>
+      <span class="disabled">‹</span>
+    <% end %>
+
+    <% (1..pagy.pages).each do |p| %>
+      <% if p == pagy.page %>
+        <span class="current"><%= p %></span>
+      <% elsif p == 1 || p == pagy.pages || (p - pagy.page).abs <= 2 %>
+        <%= link_to p, root_path(tab: tab, page: p) %>
+      <% elsif (p == 2 && pagy.page > 4) || (p == pagy.pages - 1 && pagy.page < pagy.pages - 3) %>
+        <span class="disabled">…</span>
+      <% end %>
+    <% end %>
+
+    <% if pagy.next %>
+      <%= link_to "›", root_path(tab: tab, page: pagy.next) %>
+      <%= link_to "→", root_path(tab: tab, page: pagy.pages) %>
+    <% else %>
+      <span class="disabled">›</span>
+      <span class="disabled">→</span>
+    <% end %>
+  </div>
+</div>
