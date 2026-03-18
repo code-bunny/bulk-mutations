@@ -15,9 +15,11 @@ module Mutations
     end
 
     def run_bulk_operation(operations, idempotency_key)
-      bulk_op = track_bulk_operation(operations, idempotency_key)
+      bulk_op   = track_bulk_operation(operations, idempotency_key)
       successful = 0
-      failed = 0
+      failed     = 0
+      successes  = []
+      failures   = []
 
       operations.each do |op|
         cf = CustomField.find_or_initialize_by(title: op.custom_field.title)
@@ -27,12 +29,14 @@ module Mutations
           cf.validation_options.destroy_all
           apply_validation_options(cf, op)
           successful += 1
+          successes << { "title" => cf.title, "body" => cf.body }
         else
           failed += 1
+          failures << { "title" => op.custom_field.title, "body" => op.custom_field.body, "errors" => cf.errors.full_messages }
         end
       end
 
-      finalise_bulk_operation(bulk_op, operations, successful, failed)
+      finalise_bulk_operation(bulk_op, operations, successful, failed, successes: successes, failures: failures)
     end
   end
 end

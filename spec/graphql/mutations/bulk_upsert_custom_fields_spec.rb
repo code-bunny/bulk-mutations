@@ -69,6 +69,23 @@ RSpec.describe "bulkUpsertCustomFields mutation" do
       expect(field.validation_options.first.required).to eq(true)
       expect(field.validation_options.first.max_length).to eq(100)
     end
+
+    it "sets result_url even when all rows succeed" do
+      execute("input" => { "preview" => false, "operations" => operations })
+      bulk_op = BulkOperation.last
+      expect(bulk_op.result_url).to eq("/bulk_operations/#{bulk_op.id}/results")
+    end
+
+    it "leaves error_url nil when all rows succeed" do
+      execute("input" => { "preview" => false, "operations" => operations })
+      expect(BulkOperation.last.error_url).to be_nil
+    end
+
+    it "stores success titles in results_data" do
+      execute("input" => { "preview" => false, "operations" => operations })
+      titles = BulkOperation.last.results_data["successes"].map { |r| r["title"] }
+      expect(titles).to include("Department", "Travel Tier")
+    end
   end
 
   describe "update behaviour (existing record)" do

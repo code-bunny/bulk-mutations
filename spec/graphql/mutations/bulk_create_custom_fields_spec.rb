@@ -199,6 +199,23 @@ RSpec.describe "bulkCreateCustomFields mutation" do
 
         expect(field.validation_options.first.allowed_values).to eq([ "Standard", "Premium", "Executive" ])
       end
+
+      it "sets result_url on the BulkOperation" do
+        execute("input" => { "preview" => false, "operations" => valid_operations })
+        bulk_op = BulkOperation.last
+        expect(bulk_op.result_url).to eq("/bulk_operations/#{bulk_op.id}/results")
+      end
+
+      it "leaves error_url nil when all rows succeed" do
+        execute("input" => { "preview" => false, "operations" => valid_operations })
+        expect(BulkOperation.last.error_url).to be_nil
+      end
+
+      it "stores success titles in results_data" do
+        execute("input" => { "preview" => false, "operations" => valid_operations })
+        titles = BulkOperation.last.results_data["successes"].map { |r| r["title"] }
+        expect(titles).to include("Department", "Cost Centre", "Travel Tier")
+      end
     end
 
     context "with idempotency key" do

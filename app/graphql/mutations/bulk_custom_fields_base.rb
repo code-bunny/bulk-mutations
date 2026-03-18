@@ -97,13 +97,16 @@ module Mutations
       bulk_op
     end
 
-    def finalise_bulk_operation(bulk_op, operations, successful, failed)
+    def finalise_bulk_operation(bulk_op, operations, successful, failed, successes: [], failures: [])
       bulk_op.update!(
         status:          operations.empty? || failed == 0 ? :completed : (failed == operations.size ? :failed : :partially_completed),
         processed_rows:  operations.size,
         successful_rows: successful,
         failed_rows:     failed,
-        completed_at:    Time.current
+        completed_at:    Time.current,
+        results_data:    { "successes" => successes, "failures" => failures },
+        result_url:      (successful > 0 ? "/bulk_operations/#{bulk_op.id}/results" : nil),
+        error_url:       (failed     > 0 ? "/bulk_operations/#{bulk_op.id}/errors"  : nil)
       )
       bulk_op
     end
