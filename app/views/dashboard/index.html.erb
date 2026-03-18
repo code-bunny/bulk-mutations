@@ -290,13 +290,13 @@
                 </td>
                 <td>
                   <% if op.result_url.present? %>
-                    <%= link_to "#{op.successful_rows} succeeded", op.result_url, style: "color:#16a34a; font-size:0.8rem; white-space:nowrap;" %>
+                    <%= link_to "#{op.successful_rows} succeeded", results_bulk_operation_path(op), style: "color:#16a34a; font-size:0.8rem; white-space:nowrap;" %>
                   <% end %>
                   <% if op.result_url.present? && op.error_url.present? %>
                     <span style="color:#d1d5db"> · </span>
                   <% end %>
                   <% if op.error_url.present? %>
-                    <%= link_to "#{op.failed_rows} failed", op.error_url, style: "color:#dc2626; font-size:0.8rem; white-space:nowrap;" %>
+                    <%= link_to "#{op.failed_rows} failed", errors_bulk_operation_path(op), style: "color:#dc2626; font-size:0.8rem; white-space:nowrap;" %>
                   <% end %>
                   <% if op.result_url.blank? && op.error_url.blank? %>
                     <span class="stat">—</span>

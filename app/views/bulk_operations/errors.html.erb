@@ -62,7 +62,7 @@
       <span style="color: #166534; font-size: 0.875rem;">
         <%= @bulk_operation.successful_rows %> row<%= @bulk_operation.successful_rows == 1 ? "" : "s" %> succeeded.
       </span>
-      <%= link_to "View results →", @bulk_operation.result_url, style: "color: #16a34a; font-size: 0.875rem; margin-left: 8px;" %>
+      <%= link_to "View results →", results_bulk_operation_path(@bulk_operation), style: "color: #16a34a; font-size: 0.875rem; margin-left: 8px;" %>
     </div>
   <% end %>
 </div>
