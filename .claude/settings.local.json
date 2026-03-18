@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -r \"graphql\" /Users/davidroy/Sites/CodeBunnies/bulkrails/Gemfile*)",
+      "Bash(bundle install:*)",
+      "Bash(bundle list:*)",
+      "Bash(bundle exec:*)"
+    ]
+  }
+}

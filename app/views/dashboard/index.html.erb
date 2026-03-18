@@ -1,0 +1,301 @@
+<% content_for :title, "BulkRails Dashboard" %>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+    background: #f5f5f5;
+    color: #1a1a1a;
+  }
+
+  header {
+    background: #1a1a1a;
+    color: #fff;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+
+  header a {
+    color: #aaa;
+    text-decoration: none;
+    font-size: 13px;
+  }
+
+  header a:hover { color: #fff; }
+
+  .page { padding: 32px; max-width: 1200px; margin: 0 auto; }
+
+  .section { margin-bottom: 40px; }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .section-header h2 { font-size: 16px; font-weight: 600; }
+
+  .count {
+    font-size: 12px;
+    background: #e5e5e5;
+    color: #555;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #888;
+    padding: 10px 16px;
+    background: #fafafa;
+    border-bottom: 1px solid #e5e5e5;
+  }
+
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+
+  .empty {
+    text-align: center;
+    padding: 40px 16px;
+    color: #aaa;
+    font-size: 13px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .badge-completed  { background: #dcfce7; color: #166534; }
+  .badge-failed     { background: #fee2e2; color: #991b1b; }
+  .badge-running    { background: #dbeafe; color: #1e40af; }
+  .badge-created    { background: #f3f4f6; color: #374151; }
+  .badge-queued     { background: #fef9c3; color: #854d0e; }
+  .badge-validating { background: #ede9fe; color: #5b21b6; }
+  .badge-cancelled  { background: #f3f4f6; color: #6b7280; }
+  .badge-partially_completed { background: #fef3c7; color: #92400e; }
+
+  .mono { font-family: "SF Mono", Menlo, monospace; font-size: 12px; color: #555; }
+
+  .tag-list { display: flex; flex-wrap: wrap; gap: 4px; }
+
+  .tag {
+    background: #f0f0f0;
+    color: #444;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  .validation-pill {
+    display: inline-block;
+    background: #f0f4ff;
+    color: #3730a3;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    margin: 2px 2px 2px 0;
+  }
+
+  .progress-bar-wrap {
+    background: #e5e5e5;
+    border-radius: 4px;
+    height: 6px;
+    width: 120px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: #22c55e;
+    border-radius: 4px;
+  }
+
+  .progress-bar.has-failures { background: #f97316; }
+
+  .stat { color: #888; font-size: 12px; }
+  .stat strong { color: #1a1a1a; }
+
+  .graphiql-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #2563eb;
+    color: #fff;
+    text-decoration: none;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .graphiql-link:hover { background: #1d4ed8; }
+</style>
+
+<header>
+  <h1>BulkRails</h1>
+  <a href="/graphiql">GraphiQL →</a>
+</header>
+
+<div class="page">
+
+  <%# ── Bulk Operations ─────────────────────────────────────────────── %>
+  <div class="section">
+    <div class="section-header">
+      <h2>Bulk Operations</h2>
+      <span class="count"><%= @bulk_operations.size %></span>
+    </div>
+
+    <div class="card">
+      <% if @bulk_operations.any? %>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Status</th>
+              <th>Progress</th>
+              <th>Idempotency Key</th>
+              <th>Started</th>
+              <th>Completed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @bulk_operations.each do |op| %>
+              <% total = op.total_rows.to_i %>
+              <% success = op.successful_rows.to_i %>
+              <% failed = op.failed_rows.to_i %>
+              <% pct = total > 0 ? (success * 100.0 / total).round : 0 %>
+              <tr>
+                <td class="mono">#<%= op.id %></td>
+                <td>
+                  <span class="badge badge-<%= op.status %>">
+                    <%= op.status.humanize %>
+                  </span>
+                </td>
+                <td>
+                  <% if total > 0 %>
+                    <div class="stat">
+                      <strong><%= success %></strong> / <%= total %> rows
+                      <% if failed > 0 %>
+                        &nbsp;·&nbsp;<span style="color:#ef4444"><%= failed %> failed</span>
+                      <% end %>
+                    </div>
+                    <div class="progress-bar-wrap">
+                      <div class="progress-bar <%= failed > 0 ? 'has-failures' : '' %>"
+                           style="width: <%= pct %>%"></div>
+                    </div>
+                  <% else %>
+                    <span class="stat">—</span>
+                  <% end %>
+                </td>
+                <td class="mono"><%= op.idempotency_key.presence || "—" %></td>
+                <td class="stat"><%= op.started_at&.strftime("%b %d, %H:%M:%S") || "—" %></td>
+                <td class="stat"><%= op.completed_at&.strftime("%b %d, %H:%M:%S") || "—" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <div class="empty">No bulk operations yet. Try running a mutation in <a href="/graphiql">GraphiQL</a>.</div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# ── Custom Fields ───────────────────────────────────────────────── %>
+  <div class="section">
+    <div class="section-header">
+      <h2>Custom Fields</h2>
+      <span class="count"><%= @custom_fields.size %></span>
+    </div>
+
+    <div class="card">
+      <% if @custom_fields.any? %>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Body</th>
+              <th>Validation Options</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @custom_fields.each do |cf| %>
+              <% vo = cf.custom_field_validation_option %>
+              <tr>
+                <td class="mono">#<%= cf.id %></td>
+                <td><strong><%= cf.title %></strong></td>
+                <td><%= cf.body %></td>
+                <td>
+                  <% if vo %>
+                    <% if vo.required? %>
+                      <span class="validation-pill">required</span>
+                    <% end %>
+                    <% if vo.min_length %>
+                      <span class="validation-pill">min: <%= vo.min_length %></span>
+                    <% end %>
+                    <% if vo.max_length %>
+                      <span class="validation-pill">max: <%= vo.max_length %></span>
+                    <% end %>
+                    <% if vo.pattern.present? %>
+                      <span class="validation-pill mono">/<%= vo.pattern %>/</span>
+                    <% end %>
+                    <% if vo.allowed_values.present? %>
+                      <div class="tag-list" style="margin-top:4px">
+                        <% vo.allowed_values.each do |v| %>
+                          <span class="tag"><%= v %></span>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  <% else %>
+                    <span class="stat">—</span>
+                  <% end %>
+                </td>
+                <td class="stat"><%= cf.created_at.strftime("%b %d, %H:%M:%S") %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <div class="empty">No custom fields yet. Run a live create mutation in <a href="/graphiql">GraphiQL</a>.</div>
+      <% end %>
+    </div>
+  </div>
+
+</div>
