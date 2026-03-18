@@ -1,5 +1,5 @@
 module Mutations
-  class BulkCreateCustomFields < Mutations::BulkCustomFieldsBase
+  class BulkUpsertCustomFields < Mutations::BulkCustomFieldsBase
     type Types::BulkCreateCustomFieldsPayload, null: false
 
     private
@@ -10,8 +10,11 @@ module Mutations
       failed = 0
 
       operations.each do |op|
-        cf = CustomField.new(title: op.custom_field.title, body: op.custom_field.body)
+        cf = CustomField.find_or_initialize_by(title: op.custom_field.title)
+        cf.body = op.custom_field.body
+
         if cf.save
+          cf.validation_options.destroy_all
           apply_validation_options(cf, op)
           successful += 1
         else

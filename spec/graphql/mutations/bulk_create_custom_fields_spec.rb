@@ -169,14 +169,14 @@ RSpec.describe "bulkCreateCustomFields mutation" do
         field = CustomField.find_by(title: "Cost Centre")
 
         expect(field).to be_present
-        expect(field.custom_field_validation_option.pattern).to eq("^CC-\\d{3}$")
+        expect(field.validation_options.first.pattern).to eq("^CC-\\d{3}$")
       end
 
       it "persists allowed_values as an array" do
         execute("input" => { "preview" => false, "operations" => valid_operations })
         field = CustomField.find_by(title: "Travel Tier")
 
-        expect(field.custom_field_validation_option.allowed_values).to eq([ "Standard", "Premium", "Executive" ])
+        expect(field.validation_options.first.allowed_values).to eq([ "Standard", "Premium", "Executive" ])
       end
     end
 

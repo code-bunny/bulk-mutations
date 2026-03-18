@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GraphiQL — Bulkrails</title>
+  <link rel="stylesheet" href="https://unpkg.com/graphiql@3/graphiql.min.css" />
+  <style>
+    body { margin: 0; }
+    #graphiql { height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="graphiql">Loading GraphiQL…</div>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/graphiql@3/graphiql.min.js"></script>
+
+  <script>
+    const GRAPHQL_URL = <%= @graphql_path.to_json.html_safe %>;
+
+    const fetcher = GraphiQL.createFetcher({ url: GRAPHQL_URL });
+
+    const defaultTabs = <%= raw @tabs.map { |t| { title: t[:title], query: t[:query].strip } }.to_json %>;
+
+    ReactDOM.createRoot(document.getElementById("graphiql")).render(
+      React.createElement(GraphiQL, {
+        fetcher,
+        defaultTabs,
+        defaultEditorToolsVisibility: false,
+      })
+    );
+  </script>
+</body>
+</html>

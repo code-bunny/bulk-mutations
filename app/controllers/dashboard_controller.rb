@@ -10,7 +10,7 @@ class DashboardController < ApplicationController
     )
 
     @pagy_fields, @custom_fields = pagy(
-      CustomField.includes(:custom_field_validation_option).order(created_at: :desc),
+      CustomField.includes(:validation_options).order(created_at: :desc),
       limit: PER_PAGE
     )
   end

@@ -323,7 +323,7 @@
           </thead>
           <tbody>
             <% @custom_fields.each do |cf| %>
-              <% vo = cf.custom_field_validation_option %>
+              <% vo = cf.validation_options.first %>
               <tr>
                 <td class="mono">#<%= cf.id %></td>
                 <td><strong><%= cf.title %></strong></td>

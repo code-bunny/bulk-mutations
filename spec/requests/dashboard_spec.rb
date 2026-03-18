@@ -148,7 +148,7 @@ RSpec.describe "Dashboard", type: :request do
 
       it "deletes associated validation options" do
         CustomField.all.each do |cf|
-          cf.create_custom_field_validation_option(required: true)
+          cf.validation_options.create!(required: true)
         end
 
         delete reset_custom_fields_path
